@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.UserDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_User_Map" type="com.appliancesales.entity.User">
+        <id column="User0" property="id" />
+        <result column="User1" property="name" />
+        <result column="User2" property="password" />
+        <result column="User3" property="account" />
+        <result column="User4" property="gender" />
+        <result column="User5" property="carid" />
+        <result column="User6" property="email" />
+        <result column="User7" property="phone" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="user_Column">
+        user.id as User0
+        ,user.name as User1
+        ,user.password as User2
+        ,user.account as User3
+        ,user.gender as User4
+        ,user.carid as User5
+        ,user.email as User6
+        ,user.phone as User7
+    </sql>
+
+    <select id="getUserRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from user
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectUser" parameterType="com.appliancesales.common.Assist"  resultMap="result_User_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="user_Column" /> 
+            </otherwise>
+        </choose>
+        from user
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectUserById" parameterType="java.lang.Integer" resultMap="result_User_Map">
+        select 
+            <include refid="user_Column" /> 
+        from user
+        where user.id = #{id}
+    </select> 
+	<!-- 处理用户登录 -->
+	<select id="login" parameterType="com.appliancesales.entity.User" resultType="com.appliancesales.entity.User">
+        select 
+            *
+        from user
+        where name = #{name}
+        and
+              password = #{password}
+    </select> 
+	<!-- 通过用户id找到购物车 -->
+	<select id="findCarByUid" parameterType="java.lang.Integer" resultMap="result_User_Map2">
+        select 
+            *
+        from user
+        where user.id = #{id}
+    </select> 
+    <resultMap id="result_User_Map2" type="com.appliancesales.entity.User">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="account" property="account" />
+        <result column="gender" property="gender" />
+        <result column="carid" property="carid" />
+        <result column="email" property="email" />
+        <result column="phone" property="phone" />
+        <association property="car" column="carid" select="getCar"/>
+    </resultMap>
+    <select id="getCar" parameterType="int" resultType="com.appliancesales.entity.Shoppingcar">
+        SELECT * FROM shoppingcar WHERE id=#{carid}
+     </select>
+    <!-- 获取当前登录用户 -->
+    <select id="getCurUser" parameterType="com.appliancesales.entity.User" resultType="com.appliancesales.entity.User">
+        select 
+            *
+        from user
+        where name = #{name}
+        and
+              password = #{password}
+    </select> 
+    
+    
+    
+
+
+
+
+    <insert id="insertUser" parameterType="com.appliancesales.entity.User">
+        insert into user(id,name,password,account,gender,carid,email,phone) 
+        values(#{id},#{name},#{password},#{account},#{gender},#{carid},#{email},#{phone})
+    </insert>
+
+    <insert id="insertNonEmptyUser" parameterType="com.appliancesales.entity.User">
+        insert into user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="name != null">name,</if>
+            <if test="password != null">password,</if>
+            <if test="account != null">account,</if>
+            <if test="gender != null">gender,</if>
+            <if test="carid != null">carid,</if>
+            <if test="email != null">email,</if>
+            <if test="phone != null">phone,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="password != null"> #{password},</if>
+            <if test="account != null"> #{account},</if>
+            <if test="gender != null"> #{gender},</if>
+            <if test="carid != null"> #{carid},</if>
+            <if test="email != null"> #{email},</if>
+            <if test="phone != null"> #{phone},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteUserById" parameterType="java.lang.Integer">
+        delete from user
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteUser" parameterType="com.appliancesales.common.Assist">
+        delete from user
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateUserById" parameterType="com.appliancesales.entity.User">
+        update user set
+            name=#{name}
+            ,password=#{password}
+            ,account=#{account}
+            ,gender=#{gender}
+            ,carid=#{carid}
+            ,email=#{email}
+            ,phone=#{phone}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyUserById" parameterType="com.appliancesales.entity.User">
+        update user
+        <set>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="password != null">
+                password=#{password},
+            </if>
+            <if test="account != null">
+                account=#{account},
+            </if>
+            <if test="gender != null">
+                gender=#{gender},
+            </if>
+            <if test="carid != null">
+                carid=#{carid},
+            </if>
+            <if test="email != null">
+                email=#{email},
+            </if>
+            <if test="phone != null">
+                phone=#{phone},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateUser" parameterType="map">
+        update user
+        <set>
+                id=#{enti.id},
+                name=#{enti.name},
+                password=#{enti.password},
+                account=#{enti.account},
+                gender=#{enti.gender},
+                carid=#{enti.carid},
+                email=#{enti.email},
+                phone=#{enti.phone},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyUser" parameterType="map">
+        update user
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.name != null">
+                name=#{enti.name},
+            </if>
+            <if test="enti.password != null">
+                password=#{enti.password},
+            </if>
+            <if test="enti.account != null">
+                account=#{enti.account},
+            </if>
+            <if test="enti.gender != null">
+                gender=#{enti.gender},
+            </if>
+            <if test="enti.carid != null">
+                carid=#{enti.carid},
+            </if>
+            <if test="enti.email != null">
+                email=#{enti.email},
+            </if>
+            <if test="enti.phone != null">
+                phone=#{enti.phone},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

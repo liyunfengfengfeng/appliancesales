@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.MessageboardDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_Messageboard_Map" type="com.appliancesales.entity.Messageboard">
+        <id column="Messageboard0" property="id" />
+        <result column="Messageboard1" property="name" />
+        <result column="Messageboard2" property="userMessage" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="messageboard_Column">
+        messageboard.id as Messageboard0
+        ,messageboard.name as Messageboard1
+        ,messageboard.user_message as Messageboard2
+    </sql>
+
+    <select id="getMessageboardRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from messageboard
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectMessageboard" parameterType="com.appliancesales.common.Assist"  resultMap="result_Messageboard_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="messageboard_Column" /> 
+            </otherwise>
+        </choose>
+        from messageboard
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectMessageboardById" parameterType="java.lang.Integer" resultMap="result_Messageboard_Map">
+        select 
+            <include refid="messageboard_Column" /> 
+        from messageboard
+        where messageboard.id = #{id}
+    </select> 
+
+
+    <insert id="insertMessageboard" parameterType="com.appliancesales.entity.Messageboard">
+        insert into messageboard(id,name,user_message) 
+        values(#{id},#{name},#{userMessage})
+    </insert>
+
+    <insert id="insertNonEmptyMessageboard" parameterType="com.appliancesales.entity.Messageboard">
+        insert into messageboard
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="name != null">name,</if>
+            <if test="userMessage != null">user_message,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="userMessage != null"> #{userMessage},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteMessageboardById" parameterType="java.lang.Integer">
+        delete from messageboard
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteMessageboard" parameterType="com.appliancesales.common.Assist">
+        delete from messageboard
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateMessageboardById" parameterType="com.appliancesales.entity.Messageboard">
+        update messageboard set
+            name=#{name}
+            ,user_message=#{userMessage}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyMessageboardById" parameterType="com.appliancesales.entity.Messageboard">
+        update messageboard
+        <set>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="userMessage != null">
+                user_message=#{userMessage},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateMessageboard" parameterType="map">
+        update messageboard
+        <set>
+                id=#{enti.id},
+                name=#{enti.name},
+                user_message=#{enti.userMessage},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyMessageboard" parameterType="map">
+        update messageboard
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.name != null">
+                name=#{enti.name},
+            </if>
+            <if test="enti.userMessage != null">
+                user_message=#{enti.userMessage},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

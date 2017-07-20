@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.DbOrderDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_DbOrder_Map" type="com.appliancesales.entity.DbOrder">
+        <id column="DbOrder0" property="id" />
+        <result column="DbOrder1" property="total" />
+        <result column="DbOrder2" property="carid" />
+        <result column="DbOrder3" property="ordertime" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="db_order_Column">
+        db_order.id as DbOrder0
+        ,db_order.total as DbOrder1
+        ,db_order.carid as DbOrder2
+        ,db_order.ordertime as DbOrder3
+    </sql>
+
+    <select id="getDbOrderRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from db_order
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectDbOrder" parameterType="com.appliancesales.common.Assist"  resultMap="result_DbOrder_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="db_order_Column" /> 
+            </otherwise>
+        </choose>
+        from db_order
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectDbOrderById" parameterType="java.lang.Integer" resultMap="result_DbOrder_Map">
+        select 
+            <include refid="db_order_Column" /> 
+        from db_order
+        where db_order.id = #{id}
+    </select> 
+
+	<!-- 查询目前订单的总记录数 -->
+	<select id="selectDbOrderCount" resultType="java.lang.Integer">
+        select 
+            count(*)
+        from db_order
+    </select> 
+	<!-- 查询购物车中商品的数量 -->
+	<select id="selectProducteCount" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        select 
+            count(*)
+        from db_order
+        where db_order.carid = #{id}
+    </select> 
+	<!-- 根据carid查询出当前用户的所有订单 -->
+	<select id="selectDbOrderByCarid" parameterType="java.lang.Integer" resultType="com.appliancesales.entity.DbOrder">
+        select 
+            *
+        from db_order
+        where db_order.carid = #{id}
+    </select> 
+
+
+
+
+
+
+    <insert id="insertDbOrder" parameterType="com.appliancesales.entity.DbOrder">
+        insert into db_order(id,total,carid,ordertime) 
+        values(#{id},#{total},#{carid},#{ordertime})
+    </insert>
+
+    <insert id="insertNonEmptyDbOrder" parameterType="com.appliancesales.entity.DbOrder">
+        insert into db_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="total != null">total,</if>
+            <if test="carid != null">carid,</if>
+            <if test="ordertime != null">ordertime,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="total != null"> #{total},</if>
+            <if test="carid != null"> #{carid},</if>
+            <if test="ordertime != null"> #{ordertime},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteDbOrderById" parameterType="java.lang.Integer">
+        delete from db_order
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteDbOrder" parameterType="com.appliancesales.common.Assist">
+        delete from db_order
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateDbOrderById" parameterType="com.appliancesales.entity.DbOrder">
+        update db_order set
+            total=#{total}
+            ,carid=#{carid}
+            ,ordertime=#{ordertime}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyDbOrderById" parameterType="com.appliancesales.entity.DbOrder">
+        update db_order
+        <set>
+            <if test="total != null">
+                total=#{total},
+            </if>
+            <if test="carid != null">
+                carid=#{carid},
+            </if>
+            <if test="ordertime != null">
+                ordertime=#{ordertime},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateDbOrder" parameterType="map">
+        update db_order
+        <set>
+                id=#{enti.id},
+                total=#{enti.total},
+                carid=#{enti.carid},
+                ordertime=#{enti.ordertime},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyDbOrder" parameterType="map">
+        update db_order
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.total != null">
+                total=#{enti.total},
+            </if>
+            <if test="enti.carid != null">
+                carid=#{enti.carid},
+            </if>
+            <if test="enti.ordertime != null">
+                ordertime=#{enti.ordertime},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

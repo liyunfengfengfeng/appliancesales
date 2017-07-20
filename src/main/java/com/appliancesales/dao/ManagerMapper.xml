@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.ManagerDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_Manager_Map" type="com.appliancesales.entity.Manager">
+        <id column="Manager0" property="id" />
+        <result column="Manager1" property="name" />
+        <result column="Manager2" property="password" />
+        <result column="Manager3" property="account" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="manager_Column">
+        manager.id as Manager0
+        ,manager.name as Manager1
+        ,manager.password as Manager2
+        ,manager.account as Manager3
+    </sql>
+
+    <select id="getManagerRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from manager
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectManager" parameterType="com.appliancesales.common.Assist"  resultMap="result_Manager_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="manager_Column" /> 
+            </otherwise>
+        </choose>
+        from manager
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectManagerById" parameterType="java.lang.Integer" resultMap="result_Manager_Map">
+        select 
+            <include refid="manager_Column" /> 
+        from manager
+        where manager.id = #{id}
+    </select> 
+
+
+    <insert id="insertManager" parameterType="com.appliancesales.entity.Manager">
+        insert into manager(id,name,password,account) 
+        values(#{id},#{name},#{password},#{account})
+    </insert>
+
+    <insert id="insertNonEmptyManager" parameterType="com.appliancesales.entity.Manager">
+        insert into manager
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="name != null">name,</if>
+            <if test="password != null">password,</if>
+            <if test="account != null">account,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="password != null"> #{password},</if>
+            <if test="account != null"> #{account},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteManagerById" parameterType="java.lang.Integer">
+        delete from manager
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteManager" parameterType="com.appliancesales.common.Assist">
+        delete from manager
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateManagerById" parameterType="com.appliancesales.entity.Manager">
+        update manager set
+            name=#{name}
+            ,password=#{password}
+            ,account=#{account}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyManagerById" parameterType="com.appliancesales.entity.Manager">
+        update manager
+        <set>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="password != null">
+                password=#{password},
+            </if>
+            <if test="account != null">
+                account=#{account},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateManager" parameterType="map">
+        update manager
+        <set>
+                id=#{enti.id},
+                name=#{enti.name},
+                password=#{enti.password},
+                account=#{enti.account},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyManager" parameterType="map">
+        update manager
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.name != null">
+                name=#{enti.name},
+            </if>
+            <if test="enti.password != null">
+                password=#{enti.password},
+            </if>
+            <if test="enti.account != null">
+                account=#{enti.account},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

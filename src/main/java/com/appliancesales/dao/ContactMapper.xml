@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.ContactDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_Contact_Map" type="com.appliancesales.entity.Contact">
+        <id column="Contact0" property="id" />
+        <result column="Contact1" property="name" />
+        <result column="Contact2" property="email" />
+        <result column="Contact3" property="phone" />
+        <result column="Contact4" property="message" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="contact_Column">
+        contact.id as Contact0
+        ,contact.name as Contact1
+        ,contact.email as Contact2
+        ,contact.phone as Contact3
+        ,contact.message as Contact4
+    </sql>
+
+    <select id="getContactRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from contact
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectContact" parameterType="com.appliancesales.common.Assist"  resultMap="result_Contact_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="contact_Column" /> 
+            </otherwise>
+        </choose>
+        from contact
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectContactById" parameterType="java.lang.Integer" resultMap="result_Contact_Map">
+        select 
+            <include refid="contact_Column" /> 
+        from contact
+        where contact.id = #{id}
+    </select> 
+
+
+    <insert id="insertContact" parameterType="com.appliancesales.entity.Contact">
+        insert into contact(id,name,email,phone,message) 
+        values(#{id},#{name},#{email},#{phone},#{message})
+    </insert>
+
+    <insert id="insertNonEmptyContact" parameterType="com.appliancesales.entity.Contact">
+        insert into contact
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="name != null">name,</if>
+            <if test="email != null">email,</if>
+            <if test="phone != null">phone,</if>
+            <if test="message != null">message,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="email != null"> #{email},</if>
+            <if test="phone != null"> #{phone},</if>
+            <if test="message != null"> #{message},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteContactById" parameterType="java.lang.Integer">
+        delete from contact
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteContact" parameterType="com.appliancesales.common.Assist">
+        delete from contact
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateContactById" parameterType="com.appliancesales.entity.Contact">
+        update contact set
+            name=#{name}
+            ,email=#{email}
+            ,phone=#{phone}
+            ,message=#{message}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyContactById" parameterType="com.appliancesales.entity.Contact">
+        update contact
+        <set>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="email != null">
+                email=#{email},
+            </if>
+            <if test="phone != null">
+                phone=#{phone},
+            </if>
+            <if test="message != null">
+                message=#{message},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateContact" parameterType="map">
+        update contact
+        <set>
+                id=#{enti.id},
+                name=#{enti.name},
+                email=#{enti.email},
+                phone=#{enti.phone},
+                message=#{enti.message},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyContact" parameterType="map">
+        update contact
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.name != null">
+                name=#{enti.name},
+            </if>
+            <if test="enti.email != null">
+                email=#{enti.email},
+            </if>
+            <if test="enti.phone != null">
+                phone=#{enti.phone},
+            </if>
+            <if test="enti.message != null">
+                message=#{enti.message},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

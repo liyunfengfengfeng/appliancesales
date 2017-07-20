@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.ProductDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_Product_Map" type="com.appliancesales.entity.Product">
+        <id column="Product0" property="id" />
+        <result column="Product1" property="name" />
+        <result column="Product2" property="originalPrice" />
+        <result column="Product3" property="orderid" />
+        <result column="Product4" property="storeid" />
+        <result column="Product5" property="favorablePrice" />
+        <result column="Product6" property="type" />
+        <result column="Product7" property="icon" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="product_Column">
+        product.id as Product0
+        ,product.name as Product1
+        ,product.original_price as Product2
+        ,product.orderid as Product3
+        ,product.storeid as Product4
+        ,product.favorable_price as Product5
+        ,product.type as Product6
+        ,product.icon as Product7
+    </sql>
+
+    <select id="getProductRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from product
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectProduct" parameterType="com.appliancesales.common.Assist"  resultMap="result_Product_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="product_Column" /> 
+            </otherwise>
+        </choose>
+        from product
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectProductById" parameterType="java.lang.Integer" resultMap="result_Product_Map">
+        select 
+            <include refid="product_Column" /> 
+        from product
+        where product.id = #{id}
+    </select> 
+	<!-- 查询SPECIAL PRODUCTS商品 -->
+	<select id="selectSpecialProducts" parameterType="com.appliancesales.entity.Product" resultType="com.appliancesales.entity.Product">
+        select 
+            * 
+        from product
+        where product.type = #{type}
+    </select> 
+
+	<!-- 查询FEATURED PRODUCTS商品 -->
+	<select id="selectFeaturedProducts" parameterType="com.appliancesales.entity.Product" resultType="com.appliancesales.entity.Product">
+        select 
+            * 
+        from product
+        where product.type = #{type}
+    </select> 
+	<!-- 根据订单id查询购物车的商品 -->
+	<select id="selectProductByOrderId" parameterType="java.lang.Integer" resultType="com.appliancesales.entity.Product">
+        select 
+            * 
+        from product
+        where product.orderid = #{id}
+    </select> 
+	<!-- 查询购物车中商品的数量 -->
+	<select id="selectProducteCount" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        select 
+            count(*)
+        from product
+        where product.orderid = #{id}
+    </select> 
+	<!-- 查询购物车中所有的商品 -->
+	<select id="selectProductByCarId" parameterType="java.lang.Integer" resultType="com.appliancesales.entity.Product">
+        select 
+            *
+        from product
+        where product.orderid = #{id}
+    </select> 
+	<!-- 根据商品名称查询SPECIAL PRODUCTS商品and   product.name like '%#{name}%' -->
+	<select id="selectSpecialProductsByProductName" parameterType="com.appliancesales.entity.Product" resultType="com.appliancesales.entity.Product">
+        select 
+            * 
+        from product
+        where product.type = #{type}
+         and  product.name LIKE CONCAT(CONCAT('%', #{name}), '%')
+    </select> 
+    
+    <!-- 根据商品名称查询FEATURED PRODUCTS商品 and   product.name like '%#{name}%' -->
+   
+	
+	<select id="selectFeaturedProductsByProductName" parameterType="com.appliancesales.entity.Product" resultType="com.appliancesales.entity.Product">
+        select 
+            * 
+        from product
+        where product.type = #{type}
+        and  product.name LIKE CONCAT(CONCAT('%', #{name}), '%')
+    </select> 
+	<!-- 查询购物车中商品的总金额 -->
+	<select id="selectTotalMoney" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        select 
+            sum(favorable_price)
+        from product
+        where product.orderid = #{carid}
+    </select> 
+	<!-- 查询所有商品 -->
+	<select id="selectAllProduct" resultType="com.appliancesales.entity.Product">
+        select 
+            *
+        from product
+       
+    </select> 
+	<!-- 查询分页需要的数据 -->
+	<select id="selectProductByPage" parameterType="com.appliancesales.util.Page" resultType="com.appliancesales.entity.Product">
+        select 
+            *
+        from product
+        limit #{start},#{end}
+    </select> 
+    
+    
+    
+    <insert id="insertProduct" parameterType="com.appliancesales.entity.Product">
+        insert into product(id,name,original_price,orderid,storeid,favorable_price,type,icon) 
+        values(#{id},#{name},#{originalPrice},#{orderid},#{storeid},#{favorablePrice},#{type},#{icon})
+    </insert>
+
+    <insert id="insertNonEmptyProduct" parameterType="com.appliancesales.entity.Product">
+        insert into product
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="name != null">name,</if>
+            <if test="originalPrice != null">original_price,</if>
+            <if test="orderid != null">orderid,</if>
+            <if test="storeid != null">storeid,</if>
+            <if test="favorablePrice != null">favorable_price,</if>
+            <if test="type != null">type,</if>
+            <if test="icon != null">icon,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="originalPrice != null"> #{originalPrice},</if>
+            <if test="orderid != null"> #{orderid},</if>
+            <if test="storeid != null"> #{storeid},</if>
+            <if test="favorablePrice != null"> #{favorablePrice},</if>
+            <if test="type != null"> #{type},</if>
+            <if test="icon != null"> #{icon},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteProductById" parameterType="java.lang.Integer">
+        delete from product
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteProduct" parameterType="com.appliancesales.common.Assist">
+        delete from product
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateProductById" parameterType="com.appliancesales.entity.Product">
+        update product set
+            name=#{name}
+            ,original_price=#{originalPrice}
+            ,orderid=#{orderid}
+            ,storeid=#{storeid}
+            ,favorable_price=#{favorablePrice}
+            ,type=#{type}
+            ,icon=#{icon}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyProductById" parameterType="com.appliancesales.entity.Product">
+        update product
+        <set>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="originalPrice != null">
+                original_price=#{originalPrice},
+            </if>
+            <if test="orderid != null">
+                orderid=#{orderid},
+            </if>
+            <if test="storeid != null">
+                storeid=#{storeid},
+            </if>
+            <if test="favorablePrice != null">
+                favorable_price=#{favorablePrice},
+            </if>
+            <if test="type != null">
+                type=#{type},
+            </if>
+            <if test="icon != null">
+                icon=#{icon},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateProduct" parameterType="map">
+        update product
+        <set>
+                id=#{enti.id},
+                name=#{enti.name},
+                original_price=#{enti.originalPrice},
+                orderid=#{enti.orderid},
+                storeid=#{enti.storeid},
+                favorable_price=#{enti.favorablePrice},
+                type=#{enti.type},
+                icon=#{enti.icon},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyProduct" parameterType="map">
+        update product
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.name != null">
+                name=#{enti.name},
+            </if>
+            <if test="enti.originalPrice != null">
+                original_price=#{enti.originalPrice},
+            </if>
+            <if test="enti.orderid != null">
+                orderid=#{enti.orderid},
+            </if>
+            <if test="enti.storeid != null">
+                storeid=#{enti.storeid},
+            </if>
+            <if test="enti.favorablePrice != null">
+                favorable_price=#{enti.favorablePrice},
+            </if>
+            <if test="enti.type != null">
+                type=#{enti.type},
+            </if>
+            <if test="enti.icon != null">
+                icon=#{enti.icon},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

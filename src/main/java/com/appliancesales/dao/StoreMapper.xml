@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.StoreDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_Store_Map" type="com.appliancesales.entity.Store">
+        <id column="Store0" property="id" />
+        <result column="Store1" property="salerid" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="store_Column">
+        store.id as Store0
+        ,store.salerid as Store1
+    </sql>
+
+    <select id="getStoreRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from store
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectStore" parameterType="com.appliancesales.common.Assist"  resultMap="result_Store_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="store_Column" /> 
+            </otherwise>
+        </choose>
+        from store
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectStoreById" parameterType="java.lang.Integer" resultMap="result_Store_Map">
+        select 
+            <include refid="store_Column" /> 
+        from store
+        where store.id = #{id}
+    </select> 
+	<!-- 根据商品id找到店面id -->
+	<select id="selectStoreId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        select 
+            id
+        from store
+        where store.id = #{pid}
+    </select> 
+
+
+
+
+
+
+
+
+
+    <insert id="insertStore" parameterType="com.appliancesales.entity.Store">
+        insert into store(id,salerid) 
+        values(#{id},#{salerid})
+    </insert>
+
+    <insert id="insertNonEmptyStore" parameterType="com.appliancesales.entity.Store">
+        insert into store
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="salerid != null">salerid,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="salerid != null"> #{salerid},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteStoreById" parameterType="java.lang.Integer">
+        delete from store
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteStore" parameterType="com.appliancesales.common.Assist">
+        delete from store
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateStoreById" parameterType="com.appliancesales.entity.Store">
+        update store set
+            salerid=#{salerid}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyStoreById" parameterType="com.appliancesales.entity.Store">
+        update store
+        <set>
+            <if test="salerid != null">
+                salerid=#{salerid},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateStore" parameterType="map">
+        update store
+        <set>
+                id=#{enti.id},
+                salerid=#{enti.salerid},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyStore" parameterType="map">
+        update store
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.salerid != null">
+                salerid=#{enti.salerid},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

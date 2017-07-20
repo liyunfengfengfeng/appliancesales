@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.SalerDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_Saler_Map" type="com.appliancesales.entity.Saler">
+        <id column="Saler0" property="id" />
+        <result column="Saler1" property="name" />
+        <result column="Saler2" property="password" />
+        <result column="Saler3" property="account" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="saler_Column">
+        saler.id as Saler0
+        ,saler.name as Saler1
+        ,saler.password as Saler2
+        ,saler.account as Saler3
+    </sql>
+
+    <select id="getSalerRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from saler
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectSaler" parameterType="com.appliancesales.common.Assist"  resultMap="result_Saler_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="saler_Column" /> 
+            </otherwise>
+        </choose>
+        from saler
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectSalerById" parameterType="java.lang.Integer" resultMap="result_Saler_Map">
+        select 
+            <include refid="saler_Column" /> 
+        from saler
+        where saler.id = #{id}
+    </select> 
+
+
+    <insert id="insertSaler" parameterType="com.appliancesales.entity.Saler">
+        insert into saler(id,name,password,account) 
+        values(#{id},#{name},#{password},#{account})
+    </insert>
+
+    <insert id="insertNonEmptySaler" parameterType="com.appliancesales.entity.Saler">
+        insert into saler
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="name != null">name,</if>
+            <if test="password != null">password,</if>
+            <if test="account != null">account,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="password != null"> #{password},</if>
+            <if test="account != null"> #{account},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteSalerById" parameterType="java.lang.Integer">
+        delete from saler
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteSaler" parameterType="com.appliancesales.common.Assist">
+        delete from saler
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateSalerById" parameterType="com.appliancesales.entity.Saler">
+        update saler set
+            name=#{name}
+            ,password=#{password}
+            ,account=#{account}
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptySalerById" parameterType="com.appliancesales.entity.Saler">
+        update saler
+        <set>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="password != null">
+                password=#{password},
+            </if>
+            <if test="account != null">
+                account=#{account},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateSaler" parameterType="map">
+        update saler
+        <set>
+                id=#{enti.id},
+                name=#{enti.name},
+                password=#{enti.password},
+                account=#{enti.account},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptySaler" parameterType="map">
+        update saler
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+            <if test="enti.name != null">
+                name=#{enti.name},
+            </if>
+            <if test="enti.password != null">
+                password=#{enti.password},
+            </if>
+            <if test="enti.account != null">
+                account=#{enti.account},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>

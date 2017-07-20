@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.appliancesales.dao.ShoppingcarDao">
+<cache eviction="LRU" type="com.appliancesales.util.MybatisRedisCache" 
+	flushInterval="60000" size="512" readOnly="true"/>
+    <resultMap id="result_Shoppingcar_Map" type="com.appliancesales.entity.Shoppingcar">
+        <id column="Shoppingcar0" property="id" />
+    </resultMap>
+
+    <sql id="Assist">
+        <where>
+            <foreach collection="require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="updateAssist">
+        <where>
+            <foreach collection="assist.require" item="req" separator=" ">
+                ${req.require} #{req.value}
+            </foreach>
+        </where>
+    </sql>
+
+    <sql id="shoppingcar_Column">
+        shoppingcar.id as Shoppingcar0
+    </sql>
+
+    <select id="getShoppingcarRowCount" parameterType="com.appliancesales.common.Assist" resultType="java.lang.Long">
+        select count(id) from shoppingcar
+        <if test="require!=null"><include refid="Assist" /></if>
+    </select>
+    <select id="selectShoppingcar" parameterType="com.appliancesales.common.Assist"  resultMap="result_Shoppingcar_Map">
+        select  <if test="distinct !=null">${distinct}</if>
+        <choose>
+            <when test="resultColumn!=null">${resultColumn}</when>
+            <otherwise>
+        <include refid="shoppingcar_Column" /> 
+            </otherwise>
+        </choose>
+        from shoppingcar
+        <if test="require!=null"><include refid="Assist" /></if>
+        <if test="order !=null">${order}</if>
+        <if test="rowSize !=null"> LIMIT #{rowSize} <if test="startRow !=null"> OFFSET #{startRow}</if></if>
+    </select> 
+
+    <select id="selectShoppingcarById" parameterType="java.lang.Integer" resultMap="result_Shoppingcar_Map">
+        select 
+            <include refid="shoppingcar_Column" /> 
+        from shoppingcar
+        where shoppingcar.id = #{id}
+    </select> 
+
+	<!-- 查询当前用户的购物车id -->
+	<select id="selectCarIdOfCurUser" resultType="java.lang.Integer">
+        select 
+            count(*)
+        from shoppingcar
+    </select> 
+
+
+
+
+
+
+
+
+    <insert id="insertShoppingcar" parameterType="com.appliancesales.entity.Shoppingcar">
+        insert into shoppingcar(id) 
+        values(#{id})
+    </insert>
+
+    <insert id="insertNonEmptyShoppingcar" parameterType="com.appliancesales.entity.Shoppingcar">
+        insert into shoppingcar
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteShoppingcarById" parameterType="java.lang.Integer">
+        delete from shoppingcar
+        where id = #{id}
+    </delete>
+
+    <delete id="deleteShoppingcar" parameterType="com.appliancesales.common.Assist">
+        delete from shoppingcar
+        <if test="require!=null"><include refid="Assist" /></if>
+    </delete>
+
+    <update id="updateShoppingcarById" parameterType="com.appliancesales.entity.Shoppingcar">
+        update shoppingcar set
+        where id=#{id}
+    </update>
+
+    <update id="updateNonEmptyShoppingcarById" parameterType="com.appliancesales.entity.Shoppingcar">
+        update shoppingcar
+        <set>
+        </set>
+        where id=#{id}
+    </update>
+
+    <update id="updateShoppingcar" parameterType="map">
+        update shoppingcar
+        <set>
+                id=#{enti.id},
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+    <update id="updateNonEmptyShoppingcar" parameterType="map">
+        update shoppingcar
+        <set>
+            <if test="enti.id != null">
+                id=#{enti.id},
+            </if>
+        </set>
+        <if test="assist.require!=null"><include refid="updateAssist" /></if>
+    </update>
+
+</mapper>
