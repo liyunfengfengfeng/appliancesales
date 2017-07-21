@@ -89,8 +89,10 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
 				return;
 			}else{
 				var form1=document.getElementById("register");
+
 	            form1.action="/appliancesales/register/userRegister";//设置提交路径
-	            form1.submit();                            //提交
+	            alert('注册成功');
+				form1.submit();                            //提交
 	            
 	            
 	            
